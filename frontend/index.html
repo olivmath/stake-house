@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Wallet Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/stellar-sdk@11.2.2/dist/stellar-sdk.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <header class="header">
+                <h1>🌟 Stellar Wallet Generator</h1>
+                <p>Gere carteiras Stellar seguras para investidores e usuários</p>
+            </header>
+
+            <div class="main-content">
+                <!-- Layout de duas colunas -->
+                <div class="two-column-layout">
+                    <!-- Coluna Esquerda - Investidor -->
+                    <section class="left-column investor-section">
+                        <div class="section-header">
+                            <h2>💼 Carteira do Investidor</h2>
+                            <p>Faça depósitos no contrato</p>
+                        </div>
+                        
+                        <div class="investor-card">
+                            <div class="wallet-generator">
+                                <div id="investor-wallet-info" class="wallet-info">
+                                    <!-- Informações da carteira serão inseridas aqui pelo JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="deposit-section">
+                                <h3>💰 Fazer Depósito</h3>
+                                <div class="form-group">
+                                    <label for="deposit-amount">Valor do Depósito:</label>
+                                    <input type="number" id="deposit-amount" placeholder="Digite o valor" min="1">
+                                </div>
+                                <button id="deposit-btn" class="btn btn-success" disabled>
+                                    Depositar Tokens
+                                </button>
+                                <div id="deposit-status" class="status-message"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Coluna Direita - Usuários -->
+                    <section class="right-column users-section">
+                        <div class="section-header">
+                            <h2>👥 Carteiras de Usuários</h2>
+                            <p>Registre-se para o airdrop</p>
+                            <div class="counter" id="users-counter">0 de 4 usuários registrados</div>
+                        </div>
+                        
+                        <div class="users-grid">
+                            <div class="user-card">
+                                <h3>👤 Usuário 1</h3>
+                                <div id="user-1-wallet-info" class="wallet-info">
+                                    <!-- Informações da carteira serão inseridas aqui pelo JavaScript -->
+                                </div>
+                                <button id="join-user-1" class="btn btn-join hidden" disabled>
+                                    Registrar para Airdrop
+                                </button>
+                                <div id="join-status-1" class="status-message"></div>
+                            <button id="reset-user-1" class="btn btn-reset hidden">Remover Carteira</button>
+                        </div>
+
+                        <div class="user-card">
+                            <h3>👤 Usuário 2</h3>
+                            <div id="user-2-wallet-info" class="wallet-info">
+                                <!-- Informações da carteira serão inseridas aqui pelo JavaScript -->
+                            </div>
+                            <button id="join-user-2" class="btn btn-join hidden" disabled>
+                                Registrar para Airdrop
+                            </button>
+                            <div id="join-status-2" class="status-message"></div>
+                            <button id="reset-user-2" class="btn btn-reset hidden">Remover Carteira</button>
+                        </div>
+
+                        <div class="user-card">
+                            <h3>👤 Usuário 3</h3>
+                            <div id="user-3-wallet-info" class="wallet-info">
+                                <!-- Informações da carteira serão inseridas aqui pelo JavaScript -->
+                            </div>
+                            <button id="join-user-3" class="btn btn-join hidden" disabled>
+                                Registrar para Airdrop
+                            </button>
+                            <div id="join-status-3" class="status-message"></div>
+                            <button id="reset-user-3" class="btn btn-reset hidden">Remover Carteira</button>
+                        </div>
+
+                        <div class="user-card">
+                            <h3>👤 Usuário 4</h3>
+                            <div id="user-4-wallet-info" class="wallet-info">
+                                <!-- Informações da carteira serão inseridas aqui pelo JavaScript -->
+                            </div>
+                            <button id="join-user-4" class="btn btn-join hidden" disabled>
+                                Registrar para Airdrop
+                            </button>
+                            <div id="join-status-4" class="status-message"></div>
+                            <button id="reset-user-4" class="btn btn-reset hidden">Remover Carteira</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

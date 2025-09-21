@@ -108,7 +108,7 @@ body {
     display: block;
     margin-bottom: 5px;
     font-weight: 600;
-    color: #495057;
+    color: #000000;
 }
 
 .form-group input {
@@ -397,7 +397,7 @@ body {
     display: block;
     font-weight: 600;
     margin-bottom: 5px;
-    color: white;
+    color: #000000;
     font-size: 0.9rem;
 }
 
@@ -409,7 +409,7 @@ body {
     font-family: 'Courier New', monospace;
     font-size: 0.8rem;
     word-break: break-all;
-    color: white;
+    color: #000000;
     margin-bottom: 8px;
     min-height: 40px;
     display: flex;
@@ -424,14 +424,14 @@ body {
 
 .users-section .wallet-info h3,
 .users-section .key-group label {
-    color: #1a252f;
+    color: #000000;
     font-weight: 500;
 }
 
 .users-section .key-display {
     background: white;
     border: 1px solid #dee2e6;
-    color: #1a252f;
+    color: #000000;
 }
 
 /* Estados */

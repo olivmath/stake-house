@@ -2,10 +2,29 @@
 const STELLAR_CONFIG = {
     NETWORK: 'testnet',
     HORIZON_URL: 'https://horizon-testnet.stellar.org',
-    FUNGIBLE_CONTRACT_ID: 'CCSZ3PUWNPFQNERNJVQUVY4LB42VRLCAQZCJZE6LUILHSJO7AYF45NMI',
-    STAKE_HOUSE_CONTRACT_ID: 'CAYTL7YU3XCI46HSJQSJSD3DPHX525NJCP6CZUKQJ2B7KOMOIYANIAWO',
+    FUNGIBLE_CONTRACT_ID: 'CABGVM45WEMHLBODINCWOX6IN3JEACRX3AHJZUQWDZXR5Q7VA4MQTDQ7',
+    STAKE_HOUSE_CONTRACT_ID: 'CCTK6HNBOWFQJRLSVENMNBZEZSGUDYY3SVVR77QE7ZZ2IAHQG2PQ46GX',
     ADMIN_PUBLIC_KEY: 'GBB7GMUFUCEJHUOIMD3GFC7IPK4O43ZCTAEOIAWE6I34B2TLVB5M373I'
 };
+
+
+const PLAYERS = {
+    investor: {
+        secretKey: 'SDBCIRI5XBRK7VDJNMLAYQUHUAJLYYEJZZ2NIUPR6NTWUEP3U7NXMD3A',
+    },
+    holder1: {  
+        secretKey: 'SCSTTLVJW5VZDZRS4JFE2TX5ZOTOH3LE52FXOZMSW2DV7TKMPL6O3YGR',
+    },
+    holder2: {
+        secretKey: 'SBCFYQAYXF7NCUSE6MXVBXBMWXXTTKNLMEIDSRD5Y7HCHKUM4VFPMZJP',
+    },
+    holder3: {
+        secretKey: 'SCCULIZMHYBWWWKLFRDTZKFCSIGZR2M3TTWFFUGACSWN3H36Z7R7UDQR',
+    },
+    holder4: {
+        secretKey: 'SAANXFCBMXJAOPOTQLHGQ22SUL6744YVGTEXXQ4V7WBWDNZYJIRLA76L',
+    }
+}
 
 // Stellar Wallet Generator - Aplicação Simplificada
 class StellarWalletApp {
@@ -37,11 +56,26 @@ class StellarWalletApp {
         }
     }
 
-    // Função centralizada para gerar carteiras com faucet automático
+    // Função centralizada para gerar carteiras com faucet automático (determinística)
     async generateWalletWithFaucet(walletType, userId = null) {
         try {
-            // Gerar carteira usando Stellar SDK
-            const keypair = StellarSdk.Keypair.random();
+            let secretKey;
+            
+            // Usar chaves determinísticas baseadas no tipo de carteira
+            if (walletType === 'Investidor') {
+                secretKey = PLAYERS.investor.secretKey;
+            } else if (walletType.includes('Usuário') && userId) {
+                const holderKey = `holder${userId}`;
+                secretKey = PLAYERS[holderKey]?.secretKey;
+                if (!secretKey) {
+                    throw new Error(`Chave secreta não encontrada para ${holderKey}`);
+                }
+            } else {
+                throw new Error(`Tipo de carteira não suportado: ${walletType}`);
+            }
+            
+            // Gerar carteira usando chave secreta determinística
+            const keypair = StellarSdk.Keypair.fromSecret(secretKey);
             
             // Criar objeto da carteira
             const wallet = {
@@ -54,7 +88,7 @@ class StellarWalletApp {
             // Fazer faucet (financiar conta na testnet)
             await this.fundAccountWithFaucet(keypair.publicKey());
 
-            console.log(`Carteira ${walletType} gerada e financiada com sucesso`);
+            console.log(`Carteira ${walletType} gerada deterministicamente e financiada com sucesso`);
             return { wallet, keypair };
         } catch (error) {
             console.error(`Erro ao gerar carteira ${walletType}:`, error);
@@ -67,13 +101,16 @@ class StellarWalletApp {
         try {
             const response = await fetch(`https://friendbot.stellar.org?addr=${publicKey}`);
             if (!response.ok) {
-                throw new Error(`Erro no faucet: ${response.status}`);
+                // Se o faucet falhar (conta já existe ou outro erro), não é crítico
+                console.warn(`Aviso no faucet para ${publicKey}: ${response.status} - Conta pode já existir`);
+                return { message: 'Conta pode já estar financiada' };
             }
             console.log(`Conta ${publicKey} financiada com sucesso via faucet`);
             return await response.json();
         } catch (error) {
-            console.error('Erro ao financiar conta:', error);
-            throw error;
+            console.warn('Aviso ao financiar conta (não crítico):', error);
+            // Não lançar erro, pois a conta pode já existir
+            return { message: 'Faucet não executado, conta pode já existir' };
         }
     }
 
@@ -137,13 +174,13 @@ class StellarWalletApp {
             switch (method) {
                 case 'deposit':
                     operation = contract.call('deposit',
-                        StellarSdk.Address.fromString(params.from),
+                        StellarSdk.Address.fromString(params.from).toScVal(),
                         StellarSdk.nativeToScVal(params.amount, { type: 'i128' })
                     );
                     break;
                 case 'join':
                     operation = contract.call('join',
-                        StellarSdk.Address.fromString(params.user)
+                        StellarSdk.Address.fromString(params.user).toScVal()
                     );
                     break;
                 case 'get_balance':
@@ -219,19 +256,13 @@ class StellarWalletApp {
         }
     }
 
-    generateUserWalletAutomatically(userId) {
+    async generateUserWalletAutomatically(userId) {
         try {
             const walletInfo = document.getElementById(`user-${userId}-wallet-info`);
             const resetBtn = document.getElementById(`reset-user-${userId}`);
             
-            // Gerar carteira usando Stellar SDK
-            const keypair = StellarSdk.Keypair.random();
-            const wallet = {
-                type: `Usuário ${userId}`,
-                publicKey: keypair.publicKey(),
-                secretKey: keypair.secret(),
-                createdAt: new Date().toLocaleString('pt-BR')
-            };
+            // Usar função centralizada para gerar carteira com faucet (determinística)
+            const { wallet } = await this.generateWalletWithFaucet(`Usuário ${userId}`, userId);
             
             this.userWallets[userId - 1] = wallet;
             this.displayWalletInfo(walletInfo, wallet);
@@ -242,62 +273,51 @@ class StellarWalletApp {
             }
             this.enableJoinButton(userId);
             
-            console.log(`Carteira do usuário ${userId} gerada automaticamente`);
+            console.log(`Carteira do usuário ${userId} gerada automaticamente com faucet (determinística)`);
         } catch (error) {
             console.error(`Erro ao gerar carteira do usuário ${userId}:`, error);
+            this.showNotification(`Erro ao gerar carteira do usuário ${userId}`, 'error');
         }
     }
 
-    generateInvestorWalletAutomatically() {
+    async generateInvestorWalletAutomatically() {
         const walletInfo = document.getElementById('investor-wallet-info');
         
         try {
-            // Gerar carteira usando Stellar SDK
-            const keypair = StellarSdk.Keypair.random();
-            const wallet = {
-                type: 'Investidor',
-                publicKey: keypair.publicKey(),
-                secretKey: keypair.secret(),
-                createdAt: new Date().toLocaleString('pt-BR')
-            };
+            // Usar função centralizada para gerar carteira com faucet
+            const { wallet } = await this.generateWalletWithFaucet('Investidor');
             
             this.investorWallet = wallet;
             this.displayWalletInfo(walletInfo, wallet);
             this.updateCounters();
             this.enableDepositSection();
             
-            this.showNotification('Carteira do investidor gerada automaticamente!');
+            this.showNotification('Carteira do investidor gerada automaticamente com faucet!');
         } catch (error) {
             console.error('Erro ao gerar carteira do investidor:', error);
-            this.showNotification('Erro ao gerar carteira', 'error');
+            this.showNotification('Erro ao gerar carteira do investidor', 'error');
         }
     }
 
-    generateInvestorWallet() {
+    async generateInvestorWallet() {
         const btn = document.getElementById('generate-investor');
         const walletInfo = document.getElementById('investor-wallet-info');
         
         this.setLoading(btn, true);
         
         try {
-            // Gerar carteira usando Stellar SDK
-            const keypair = StellarSdk.Keypair.random();
-            const wallet = {
-                type: 'Investidor',
-                publicKey: keypair.publicKey(),
-                secretKey: keypair.secret(),
-                createdAt: new Date().toLocaleString('pt-BR')
-            };
+            // Usar função centralizada para gerar carteira com faucet
+            const { wallet } = await this.generateWalletWithFaucet('Investidor');
             
             this.investorWallet = wallet;
             this.displayWalletInfo(walletInfo, wallet);
             this.updateCounters();
             this.enableDepositSection();
             
-            this.showNotification('Carteira do investidor gerada com sucesso!');
+            this.showNotification('Carteira do investidor gerada com sucesso e financiada!');
         } catch (error) {
             console.error('Erro ao gerar carteira do investidor:', error);
-            this.showNotification('Erro ao gerar carteira', 'error');
+            this.showNotification('Erro ao gerar carteira do investidor', 'error');
         } finally {
             this.setLoading(btn, false);
         }
@@ -383,7 +403,7 @@ class StellarWalletApp {
         }
     }
 
-    generateUserWallet(userId) {
+    async generateUserWallet(userId) {
         const btn = document.getElementById(`generate-user-${userId}`);
         const walletInfo = document.getElementById(`user-${userId}-wallet-info`);
         const resetBtn = document.getElementById(`reset-user-${userId}`);
@@ -391,14 +411,8 @@ class StellarWalletApp {
         this.setLoading(btn, true);
         
         try {
-            // Gerar carteira usando Stellar SDK
-            const keypair = StellarSdk.Keypair.random();
-            const wallet = {
-                type: `Usuário ${userId}`,
-                publicKey: keypair.publicKey(),
-                secretKey: keypair.secret(),
-                createdAt: new Date().toLocaleString('pt-BR')
-            };
+            // Usar função centralizada para gerar carteira com faucet (determinística)
+            const { wallet } = await this.generateWalletWithFaucet(`Usuário ${userId}`, userId);
             
             this.userWallets[userId - 1] = wallet;
             this.displayWalletInfo(walletInfo, wallet);
@@ -408,10 +422,10 @@ class StellarWalletApp {
             this.enableJoinButton(userId);
             
             this.updateCounters();
-            this.showNotification(`Carteira do usuário ${userId} gerada com sucesso!`);
+            this.showNotification(`Carteira do usuário ${userId} gerada com sucesso e financiada (determinística)!`);
         } catch (error) {
             console.error(`Erro ao gerar carteira do usuário ${userId}:`, error);
-            this.showNotification('Erro ao gerar carteira', 'error');
+            this.showNotification(`Erro ao gerar carteira do usuário ${userId}`, 'error');
         } finally {
             this.setLoading(btn, false);
         }
